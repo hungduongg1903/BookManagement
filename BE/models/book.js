@@ -21,6 +21,11 @@ const Book =
         description: { type: String },
         stock: { type: Number, default: 0 },
         available: { type: Boolean, default: true },
+        isbn: { type: String, required: true, unique: true }, // ISBN phải là duy nhất
+        publicationYear: { type: Number, required: true }, // Năm xuất bản
+        publisher: { type: String, required: true }, // Nhà xuất bản
+        pages: { type: Number, required: true }, // Số trang
+        image: { type: String }, // URL hình ảnh bìa sách
       },
       { timestamps: true }
     )
