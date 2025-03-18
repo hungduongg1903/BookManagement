@@ -1,61 +1,77 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Link, useParams, useNavigate } from "react-router-dom"
-import axios from "axios"
-import "bootstrap/dist/css/bootstrap.min.css"
+import { useEffect, useState } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
 // Thêm react-toastify để hiển thị thông báo
-import { toast, ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const BookDetails = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [book, setBook] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const token = localStorage.getItem("token"); // Lấy token
+  const role = localStorage.getItem("role"); // Lấy role
 
   useEffect(() => {
-    setLoading(true)
+    setLoading(true);
     axios
-      .get(`http://localhost:9999/books/${id}`)
+      .get(`http://localhost:9999/books/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }, // Thêm header token
+      })
       .then((res) => {
-        setBook(res.data)
-        setLoading(false)
+        setBook(res.data);
+        setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching book details:", error)
+        console.error("Error fetching book details:", error);
         // Hiển thị thông báo lỗi chi tiết từ backend nếu có
-        const errorMessage = error.response?.data?.message || "Failed to load book details. Please try again later."
-        setError(errorMessage)
-        setLoading(false)
-      })
-  }, [id])
+        const errorMessage =
+          error.response?.data?.message ||
+          "Failed to load book details. Please try again later.";
+        setError(errorMessage);
+        setLoading(false);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("userId");
+          localStorage.removeItem("role");
+          navigate("/login");
+        }
+      });
+  }, [id, navigate, token]);
 
   // Hàm xóa sách
   const handleDelete = async () => {
     // Xác nhận trước khi xóa
     if (!window.confirm(`Are you sure you want to delete "${book.title}"?`)) {
-      return
+      return;
     }
 
     try {
-      await axios.delete(`http://localhost:9999/books/delete/${id}`)
+      await axios.delete(`http://localhost:9999/books/delete/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }, // Thêm header token
+      });
       toast.success("Book deleted successfully!", {
         position: "top-right",
         autoClose: 3000,
-      })
+      });
       // Chuyển hướng về danh sách sách sau khi xóa
-      setTimeout(() => navigate("/"), 3000)
+      setTimeout(() => navigate("/"), 3000);
     } catch (error) {
-      console.error("Error deleting book:", error)
-      const errorMessage = error.response?.data?.message || "Failed to delete book. Please try again later."
+      console.error("Error deleting book:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to delete book. Please try again later.";
       toast.error(errorMessage, {
         position: "top-right",
         autoClose: 3000,
-      })
+      });
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -65,7 +81,7 @@ const BookDetails = () => {
         </div>
         <p className="mt-3">Loading book details...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -78,7 +94,7 @@ const BookDetails = () => {
           Back to Book List
         </button>
       </div>
-    )
+    );
   }
 
   if (!book) {
@@ -91,7 +107,7 @@ const BookDetails = () => {
           Back to Book List
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -127,8 +143,8 @@ const BookDetails = () => {
                     className="img-fluid rounded-3"
                     style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "cover" }}
                     onError={(e) => {
-                      e.target.style.display = "none"
-                      e.target.nextSibling.style.display = "block"
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "block";
                     }}
                   />
                 ) : null}
@@ -222,17 +238,21 @@ const BookDetails = () => {
         {/* Action Buttons */}
         <div className="card-footer bg-white p-4 border-top">
           <div className="d-flex justify-content-end gap-2">
-            <Link to={`/edit-book/${book._id}`} className="btn btn-warning">
-              <i className="bi bi-pencil me-2"></i>Edit Book
-            </Link>
-            <button className="btn btn-danger" onClick={handleDelete}>
-              <i className="bi bi-trash me-2"></i>Delete Book
-            </button>
+            {role === "admin" && (
+              <>
+                <Link to={`/edit-book/${book._id}`} className="btn btn-warning">
+                  <i className="bi bi-pencil me-2"></i>Edit Book
+                </Link>
+                <button className="btn btn-danger" onClick={handleDelete}>
+                  <i className="bi bi-trash me-2"></i>Delete Book
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BookDetails
+export default BookDetails;

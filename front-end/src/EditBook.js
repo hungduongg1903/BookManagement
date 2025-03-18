@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import axios from "axios"
-import "bootstrap/dist/css/bootstrap.min.css"
-import { toast, ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const EditBook = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [book, setBook] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     author: "",
@@ -24,22 +24,31 @@ const EditBook = () => {
     publisher: "",
     pages: "",
     image: "",
-  })
+  });
 
   // Get authors and categories for dropdown
-  const [authors, setAuthors] = useState([])
-  const [categories, setCategories] = useState([])
-  const [previewImage, setPreviewImage] = useState("")
+  const [authors, setAuthors] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [previewImage, setPreviewImage] = useState("");
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
 
   useEffect(() => {
+    if (!token || role !== "admin") {
+      navigate("/login");
+      return;
+    }
+
     const fetchData = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
 
         // Get book information
-        const bookResponse = await axios.get(`http://localhost:9999/books/${id}`)
-        const bookData = bookResponse.data
-        setBook(bookData)
+        const bookResponse = await axios.get(`http://localhost:9999/books/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const bookData = bookResponse.data;
+        setBook(bookData);
         setFormData({
           title: bookData.title,
           author: bookData.author?._id || "",
@@ -51,59 +60,73 @@ const EditBook = () => {
           publisher: bookData.publisher || "",
           pages: bookData.pages || "",
           image: bookData.image || "",
-        })
-        setPreviewImage(bookData.image || "")
+        });
+        setPreviewImage(bookData.image || "");
 
         // Get author list
-        const authorsResponse = await axios.get("http://localhost:9999/authors")
-        setAuthors(authorsResponse.data)
+        const authorsResponse = await axios.get("http://localhost:9999/authors", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAuthors(authorsResponse.data);
 
         // Get category list
-        const categoriesResponse = await axios.get("http://localhost:9999/categories")
-        setCategories(categoriesResponse.data)
+        const categoriesResponse = await axios.get("http://localhost:9999/categories", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCategories(categoriesResponse.data);
 
-        setLoading(false)
+        setLoading(false);
       } catch (error) {
-        console.error("Error fetching data:", error)
-        setError("Failed to load book details. Please try again later.")
-        setLoading(false)
+        console.error("Error fetching data:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("userId");
+          localStorage.removeItem("role");
+          navigate("/login");
+        } else if (error.response?.status === 403) {
+          setError("Access denied. Admin role required.");
+        } else {
+          setError("Failed to load book details. Please try again.");
+        }
       }
-    }
+    };
 
-    fetchData()
-  }, [id])
+    fetchData();
+  }, [id, navigate, token, role]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: name === "stock" || name === "pages" || name === "publicationYear" ? parseInt(value) || 0 : value,
-    }))
+    }));
 
     // Update image preview when image URL changes
     if (name === "image") {
-      setPreviewImage(value)
+      setPreviewImage(value);
     }
-  }
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      await axios.put(`http://localhost:9999/books/update/${id}`, formData)
+      await axios.put(`http://localhost:9999/books/update/${id}`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       toast.success("Book updated successfully!", {
         position: "top-right",
         autoClose: 3000,
-      })
-      setTimeout(() => navigate(`/book/${id}`), 3000)
+      });
+      setTimeout(() => navigate(`/book/${id}`), 3000);
     } catch (error) {
-      console.error("Error updating book:", error)
-      const errorMessage = error.response?.data?.message || "Failed to update book. Please try again later."
+      console.error("Error updating book:", error);
+      const errorMessage = error.response?.data?.message || "Failed to update book. Please try again later.";
       toast.error(errorMessage, {
         position: "top-right",
         autoClose: 3000,
-      })
+      });
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -113,7 +136,7 @@ const EditBook = () => {
         </div>
         <p className="mt-3">Loading book details...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -126,29 +149,29 @@ const EditBook = () => {
           Back to Book Details
         </button>
       </div>
-    )
+    );
   }
 
   return (
     <div className="container py-5">
       <ToastContainer />
-      
+
       {/* Header with back button */}
       <div className="d-flex align-items-center mb-4">
-        <button 
-          className="btn btn-outline-primary me-3" 
+        <button
+          className="btn btn-outline-primary me-3"
           onClick={() => navigate(`/book/${id}`)}
         >
           <i className="bi bi-arrow-left me-2"></i>Back
         </button>
         <h1 className="mb-0">Edit Book</h1>
       </div>
-      
+
       <div className="card shadow border-0 overflow-hidden">
         <div className="card-header bg-primary text-white py-3">
           <h5 className="mb-0">Editing: {book?.title}</h5>
         </div>
-        
+
         <div className="card-body p-4">
           <form onSubmit={handleSubmit}>
             <div className="row g-4">
@@ -310,7 +333,7 @@ const EditBook = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Right column - Image preview */}
               <div className="col-lg-4">
                 <div className="card h-100 bg-light">
@@ -320,10 +343,10 @@ const EditBook = () => {
                   <div className="card-body d-flex flex-column">
                     <div className="flex-grow-1 d-flex align-items-center justify-content-center mb-3">
                       {previewImage ? (
-                        <img 
-                          src={previewImage || "/placeholder.svg"} 
-                          alt="Book cover preview" 
-                          className="img-fluid rounded shadow-sm" 
+                        <img
+                          src={previewImage || "/placeholder.svg"}
+                          alt="Book cover preview"
+                          className="img-fluid rounded shadow-sm"
                           style={{ maxHeight: "250px" }}
                         />
                       ) : (
@@ -333,7 +356,7 @@ const EditBook = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     <div>
                       <label htmlFor="image" className="form-label fw-bold">
                         Image URL
@@ -369,7 +392,7 @@ const EditBook = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default EditBook
+export default EditBook;
