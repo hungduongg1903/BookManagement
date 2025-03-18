@@ -31,8 +31,7 @@ router.put(
   loanController.updateLoanStatus
 );
 
-// Return a book
-router.put("/:id/return", authenticate, loanController.returnBook);
+
 
 // Extend loan duration
 router.put("/:id/extend", authenticate, loanController.extendLoan);
