@@ -10,8 +10,8 @@ exports.register = async (req, res) => {
     // Check if user already exists
     const userExists = await User.findOne({ $or: [{ email }, { username }] });
     if (userExists) {
-      return res.status(400).json({ 
-        message: "User already exists with this email or username" 
+      return res.status(400).json({
+        message: "User already exists with this email or username",
       });
     }
 
@@ -25,7 +25,7 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       // Only set role if admin is creating user, otherwise default to "user"
-      role: req.user && req.user.role === "admin" ? role || "user" : "user"
+      role: req.user && req.user.role === "admin" ? role || "user" : "user",
     });
 
     await user.save();
@@ -42,18 +42,18 @@ exports.register = async (req, res) => {
       _id: user._id,
       username: user.username,
       email: user.email,
-      role: user.role
+      role: user.role,
     };
 
     res.status(201).json({
       message: "User registered successfully",
       token,
-      user: userWithoutPassword
+      user: userWithoutPassword,
     });
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error registering user", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error registering user",
+      error: error.message,
     });
   }
 };
@@ -65,14 +65,14 @@ exports.login = async (req, res) => {
 
     // Check if email/username provided
     if (!email && !username) {
-      return res.status(400).json({ 
-        message: "Please provide email or username" 
+      return res.status(400).json({
+        message: "Please provide email or username",
       });
     }
 
     // Find user by email or username
     const user = await User.findOne({
-      $or: [{ email }, { username }]
+      $or: [{ email }, { username }],
     });
 
     if (!user) {
@@ -97,18 +97,18 @@ exports.login = async (req, res) => {
       _id: user._id,
       username: user.username,
       email: user.email,
-      role: user.role
+      role: user.role,
     };
 
     res.status(200).json({
       message: "Login successful",
       token,
-      user: userWithoutPassword
+      user: userWithoutPassword,
     });
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error logging in", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error logging in",
+      error: error.message,
     });
   }
 };
@@ -122,9 +122,9 @@ exports.getProfile = async (req, res) => {
     }
     res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error fetching user profile", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error fetching user profile",
+      error: error.message,
     });
   }
 };
@@ -135,9 +135,9 @@ exports.getAllUsers = async (req, res) => {
     const users = await User.find().select("-password");
     res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error fetching users", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error fetching users",
+      error: error.message,
     });
   }
 };
@@ -151,9 +151,9 @@ exports.getUserById = async (req, res) => {
     }
     res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error fetching user", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error fetching user",
+      error: error.message,
     });
   }
 };
@@ -167,12 +167,12 @@ exports.updateUser = async (req, res) => {
     // Only allow updating fields that were provided
     if (username) updateData.username = username;
     if (email) updateData.email = email;
-    
+
     // Only admin can update roles
     if (role && req.user.role === "admin") {
       updateData.role = role;
     }
-    
+
     // If password is being updated, hash it
     if (password) {
       const salt = await bcrypt.genSalt(10);
@@ -184,14 +184,14 @@ exports.updateUser = async (req, res) => {
       const existingUser = await User.findOne({
         $or: [
           username ? { username } : { _id: null },
-          email ? { email } : { _id: null }
+          email ? { email } : { _id: null },
         ],
-        _id: { $ne: req.params.id }
+        _id: { $ne: req.params.id },
       });
 
       if (existingUser) {
-        return res.status(400).json({ 
-          message: "Username or email already in use by another user" 
+        return res.status(400).json({
+          message: "Username or email already in use by another user",
         });
       }
     }
@@ -206,14 +206,14 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ 
-      message: "User updated successfully", 
-      user: updatedUser 
+    res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
     });
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error updating user", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error updating user",
+      error: error.message,
     });
   }
 };
@@ -227,9 +227,9 @@ exports.deleteUser = async (req, res) => {
     }
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error deleting user", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error deleting user",
+      error: error.message,
     });
   }
 };

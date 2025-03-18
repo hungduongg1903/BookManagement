@@ -12,7 +12,7 @@ router.use("/books", bookRouter);
 router.use("/authors", authorRouter);
 router.use("/categories", categoryRouter);
 
-router.use("/loans", loanRoutes); 
+router.use("/loans", loanRouter);
 router.use("/users", userRouter);
 
 // User loans route can be added to userRouter or handled here

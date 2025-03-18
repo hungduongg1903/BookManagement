@@ -16,7 +16,6 @@ const loanSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Virtual for determining if a loan is overdue
 loanSchema.virtual("isOverdue").get(function () {
   if (this.status === "returned") return false;
 
@@ -26,7 +25,6 @@ loanSchema.virtual("isOverdue").get(function () {
   return new Date() > dueDate;
 });
 
-// Ensure virtuals are included when converting to JSON
 loanSchema.set("toJSON", {
   virtuals: true,
   transform: (doc, ret) => {
