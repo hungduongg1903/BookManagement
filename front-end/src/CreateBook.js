@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import axios from "axios"
-import "bootstrap/dist/css/bootstrap.min.css"
-import { toast, ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const CreateBook = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
     author: "",
@@ -20,70 +20,89 @@ const CreateBook = () => {
     publisher: "",
     pages: "",
     image: "",
-  })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [previewImage, setPreviewImage] = useState("")
-
-  // Get authors and categories for dropdown
-  const [authors, setAuthors] = useState([])
-  const [categories, setCategories] = useState([])
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [previewImage, setPreviewImage] = useState("");
+  const [authors, setAuthors] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-
-        // Get author list
-        const authorsResponse = await axios.get("http://localhost:9999/authors")
-        setAuthors(authorsResponse.data)
-
-        // Get category list
-        const categoriesResponse = await axios.get("http://localhost:9999/categories")
-        setCategories(categoriesResponse.data)
-
-        setLoading(false)
-      } catch (error) {
-        console.error("Error fetching data:", error)
-        setError("Failed to load authors and categories. Please try again later.")
-        setLoading(false)
-      }
+    if (!token || role !== "admin") {
+      navigate("/login");
+      return;
     }
 
-    fetchData()
-  }, [])
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Get author list
+        const authorsResponse = await axios.get("http://localhost:9999/authors", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAuthors(authorsResponse.data);
+
+        // Get category list
+        const categoriesResponse = await axios.get("http://localhost:9999/categories", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCategories(categoriesResponse.data);
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("userId");
+          localStorage.removeItem("role");
+          navigate("/login");
+        } else if (error.response?.status === 403) {
+          setError("Access denied. Admin role required.");
+        } else {
+          setError("Failed to load data. Please try again.");
+        }
+      }
+    };
+
+    fetchData();
+  }, [navigate, token, role]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: name === "stock" || name === "pages" || name === "publicationYear" ? parseInt(value) || 0 : value,
-    }))
-    
+    }));
+
     // Update image preview when image URL changes
     if (name === "image") {
-      setPreviewImage(value)
+      setPreviewImage(value);
     }
-  }
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:9999/books/create", formData)
+      const response = await axios.post("http://localhost:9999/books/create", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       toast.success("Book created successfully!", {
         position: "top-right",
         autoClose: 3000,
-      })
-      setTimeout(() => navigate(`/book/${response.data._id}`), 3000)
+      });
+      setTimeout(() => navigate(`/book/${response.data._id}`), 3000);
     } catch (error) {
-      console.error("Error creating book:", error)
-      const errorMessage = error.response?.data?.message || "Failed to create book. Please try again later."
+      console.error("Error creating book:", error);
+      const errorMessage = error.response?.data?.message || "Failed to create book. Please try again later.";
       toast.error(errorMessage, {
         position: "top-right",
         autoClose: 3000,
-      })
+      });
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -93,7 +112,7 @@ const CreateBook = () => {
         </div>
         <p className="mt-3">Loading...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -106,29 +125,29 @@ const CreateBook = () => {
           Back to Book List
         </button>
       </div>
-    )
+    );
   }
 
   return (
     <div className="container py-5">
       <ToastContainer />
-      
+
       {/* Header with back button */}
       <div className="d-flex align-items-center mb-4">
-        <button 
-          className="btn btn-outline-primary me-3" 
+        <button
+          className="btn btn-outline-primary me-3"
           onClick={() => navigate("/")}
         >
           <i className="bi bi-arrow-left me-2"></i>Back to Library
         </button>
         <h1 className="mb-0">Add New Book</h1>
       </div>
-      
+
       <div className="card shadow border-0 overflow-hidden">
         <div className="card-header bg-success text-white py-3">
           <h5 className="mb-0">Enter Book Information</h5>
         </div>
-        
+
         <div className="card-body p-4">
           <form onSubmit={handleSubmit}>
             <div className="row g-4">
@@ -295,7 +314,7 @@ const CreateBook = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Right column - Image preview */}
               <div className="col-lg-4">
                 <div className="card h-100 bg-light">
@@ -305,10 +324,10 @@ const CreateBook = () => {
                   <div className="card-body d-flex flex-column">
                     <div className="flex-grow-1 d-flex align-items-center justify-content-center mb-3">
                       {previewImage ? (
-                        <img 
-                          src={previewImage || "/placeholder.svg"} 
-                          alt="Book cover preview" 
-                          className="img-fluid rounded shadow-sm" 
+                        <img
+                          src={previewImage || "/placeholder.svg"}
+                          alt="Book cover preview"
+                          className="img-fluid rounded shadow-sm"
                           style={{ maxHeight: "250px" }}
                         />
                       ) : (
@@ -318,7 +337,7 @@ const CreateBook = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     <div>
                       <label htmlFor="image" className="form-label fw-bold">
                         Image URL
@@ -354,7 +373,7 @@ const CreateBook = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CreateBook
+export default CreateBook;

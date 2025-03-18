@@ -1,31 +1,47 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import axios from "axios"
-import "bootstrap/dist/css/bootstrap.min.css"
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const HomePage = () => {
-  const [books, setBooks] = useState([])
-  const [search, setSearch] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
+  const [books, setBooks] = useState([]);
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
 
   useEffect(() => {
+    if (!token || role !== "admin") {
+      navigate("/user-home"); // Chuyển hướng người dùng thường về UserHomePage
+      return;
+    }
+
     axios
-      .get("http://localhost:9999/books")
+      .get("http://localhost:9999/books", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .then((res) => setBooks(res.data))
-      .catch((error) => console.error("Error fetching books:", error))
-  }, [])
+      .catch((error) => {
+        console.error("Error fetching books:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+        }
+      });
+  }, [token, role, navigate]);
 
   // Filter books by search and category
   const filteredBooks = books.filter(
     (book) =>
       book.title.toLowerCase().includes(search.toLowerCase()) &&
-      (selectedCategory === "" || book.category.name === selectedCategory),
-  )
+      (selectedCategory === "" || book.category.name === selectedCategory)
+  );
 
   // Get list of categories for filtering
-  const categories = [...new Set(books.map((book) => book.category.name))]
+  const categories = [...new Set(books.map((book) => book.category.name))];
 
   return (
     <div className="container py-5">
@@ -33,8 +49,19 @@ const HomePage = () => {
       <div className="row mb-5">
         <div className="col-12">
           <div className="bg-primary text-white rounded-3 shadow p-4 text-center">
-            <h1 className="display-4 fw-bold">Book Library</h1>
-            <p className="lead">Discover and manage your book collection</p>
+            <h1 className="display-4 fw-bold">Book Library Management</h1>
+            <p className="lead">Welcome, Admin</p>
+            <button
+              className="btn btn-outline-light mt-2"
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("userId");
+                localStorage.removeItem("role");
+                navigate("/login");
+              }}
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>
@@ -59,13 +86,19 @@ const HomePage = () => {
                       checked={selectedCategory === category}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                     />
-                    <label className="form-check-label" htmlFor={`category-${category}`}>
+                    <label
+                      className="form-check-label"
+                      htmlFor={`category-${category}`}
+                    >
                       {category}
                     </label>
                   </div>
                 ))}
               </div>
-              <button className="btn btn-outline-secondary w-100 mt-3" onClick={() => setSelectedCategory("")}>
+              <button
+                className="btn btn-outline-secondary w-100 mt-3"
+                onClick={() => setSelectedCategory("")}
+              >
                 Clear Filter
               </button>
             </div>
@@ -93,7 +126,10 @@ const HomePage = () => {
                     onChange={(e) => setSearch(e.target.value)}
                   />
                   {search && (
-                    <button className="btn btn-outline-secondary" onClick={() => setSearch("")}>
+                    <button
+                      className="btn btn-outline-secondary"
+                      onClick={() => setSearch("")}
+                    >
                       Clear
                     </button>
                   )}
@@ -121,13 +157,18 @@ const HomePage = () => {
                       filteredBooks.map((book) => (
                         <tr key={book._id}>
                           <td className="fw-bold">
-                            <Link to={`/book/${book._id}`} className="text-decoration-none">
+                            <Link
+                              to={`/book/${book._id}`}
+                              className="text-decoration-none"
+                            >
                               {book.title}
                             </Link>
                           </td>
                           <td>{book.author?.name}</td>
                           <td>
-                            <span className="badge bg-info text-dark">{book.category?.name}</span>
+                            <span className="badge bg-info text-dark">
+                              {book.category?.name}
+                            </span>
                           </td>
                           <td>
                             {book.description.length > 50
@@ -137,9 +178,13 @@ const HomePage = () => {
                           <td className="text-center">{book.stock}</td>
                           <td>
                             {book.available ? (
-                              <span className="badge bg-success">Available</span>
+                              <span className="badge bg-success">
+                                Available
+                              </span>
                             ) : (
-                              <span className="badge bg-danger">Unavailable</span>
+                              <span className="badge bg-danger">
+                                Unavailable
+                              </span>
                             )}
                           </td>
                         </tr>
@@ -160,15 +205,18 @@ const HomePage = () => {
                 <span className="text-muted">
                   Showing {filteredBooks.length} of {books.length} books
                 </span>
-                {selectedCategory && <span className="badge bg-primary">Filtered by: {selectedCategory}</span>}
+                {selectedCategory && (
+                  <span className="badge bg-primary">
+                    Filtered by: {selectedCategory}
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default HomePage
-
+export default HomePage;
