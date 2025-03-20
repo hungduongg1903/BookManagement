@@ -7,6 +7,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 const HomePage = () => {
   const [books, setBooks] = useState([]);
+  const [categories, setCategories] = useState([]); // Sửa lỗi: Dùng state đúng
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const navigate = useNavigate();
@@ -15,10 +16,11 @@ const HomePage = () => {
 
   useEffect(() => {
     if (!token || role !== "admin") {
-      navigate("/user-home"); // Chuyển hướng người dùng thường về UserHomePage
+      navigate("/user-home");
       return;
     }
 
+    // Fetch danh sách sách
     axios
       .get("http://localhost:9999/books", {
         headers: { Authorization: `Bearer ${token}` },
@@ -31,17 +33,28 @@ const HomePage = () => {
           navigate("/login");
         }
       });
+
+    // Fetch danh mục sách
+    axios
+      .get("http://localhost:9999/categories", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setCategories(res.data))
+      .catch((error) => {
+        console.error("Error fetching categories:", error);
+      });
   }, [token, role, navigate]);
 
-  // Filter books by search and category
-  const filteredBooks = books.filter(
-    (book) =>
-      book.title.toLowerCase().includes(search.toLowerCase()) &&
-      (selectedCategory === "" || book.category.name === selectedCategory)
-  );
-
-  // Get list of categories for filtering
-  const categories = [...new Set(books.map((book) => book.category.name))];
+  // Lọc sách theo tiêu chí tìm kiếm và danh mục
+  const filteredBooks = books.filter((book) => {
+    const matchesSearch = book.title
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesCategory =
+      !selectedCategory ||
+      (book.category?.name && book.category.name === selectedCategory);
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="container py-5">
@@ -76,21 +89,21 @@ const HomePage = () => {
             <div className="card-body">
               <div className="d-flex flex-column gap-2">
                 {categories.map((category) => (
-                  <div key={category} className="form-check">
+                  <div key={category._id} className="form-check">
                     <input
                       className="form-check-input"
                       type="radio"
                       name="category"
-                      id={`category-${category}`}
-                      value={category}
-                      checked={selectedCategory === category}
+                      id={`category-${category.name}`}
+                      value={category.name}
+                      checked={selectedCategory === category.name}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                     />
                     <label
                       className="form-check-label"
-                      htmlFor={`category-${category}`}
+                      htmlFor={`category-${category.name}`}
                     >
-                      {category}
+                      {category.name}
                     </label>
                   </div>
                 ))}
@@ -100,6 +113,13 @@ const HomePage = () => {
                 onClick={() => setSelectedCategory("")}
               >
                 Clear Filter
+              </button>
+              
+              <button
+                className="btn btn-outline-secondary w-100 mt-3"
+                onClick={() => navigate("/manager-category")}
+              >
+                Manager Category
               </button>
             </div>
           </div>

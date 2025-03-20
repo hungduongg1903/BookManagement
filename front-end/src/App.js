@@ -7,6 +7,8 @@ import CreateBook from "./CreateBook";
 import Login from "./Login";
 import Register from "./Register";
 import UserHomePage from "./UserHomePage";
+import AddCategory from "./AddCategory";
+import ManagerCategory from "./ManagerCategory";
 
 const App=()=> {
   return (
@@ -19,6 +21,8 @@ const App=()=> {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/user-home" element={<UserHomePage />} />
+        <Route path="/add-category" element={<AddCategory />} />
+        <Route path="/manager-category" element={<ManagerCategory />} />
       </Routes>
     </Router>
   );
