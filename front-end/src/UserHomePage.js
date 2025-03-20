@@ -10,6 +10,8 @@ import "react-toastify/dist/ReactToastify.css";
 const UserHomePage = () => {
   const [user, setUser] = useState(null);
   const [books, setBooks] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState("All");
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingBooks, setLoadingBooks] = useState(true);
   const navigate = useNavigate();
@@ -58,7 +60,17 @@ const UserHomePage = () => {
         setLoadingBooks(false);
       }
     };
-
+ const fetchCategories = async () => {
+   try {
+     const response = await axios.get("http://localhost:9999/categories", {
+       headers: { Authorization: `Bearer ${token}` },
+     });
+     setCategories(response.data);
+   } catch (error) {
+     console.error("Error fetching categories:", error);
+   }
+ };
+fetchCategories();
     fetchUserProfile();
     fetchBooks();
   }, [token, userId, navigate]);
@@ -69,6 +81,13 @@ const UserHomePage = () => {
     toast.success("Logged out successfully!");
     setTimeout(() => navigate("/login"), 2000);
   };
+ const filteredBooks =
+   selectedCategory === "All"
+     ? books
+     : books.filter(
+         (book) =>
+           book.category?.name?.toLowerCase() === selectedCategory.toLowerCase()
+       );
 
   // Display loading if both APIs haven't completed
   if (loadingUser || loadingBooks) {
@@ -116,14 +135,21 @@ const UserHomePage = () => {
           <div className="bg-success text-white rounded shadow p-4 p-md-5">
             <div className="row align-items-center">
               <div className="col-md-8 text-center text-md-start">
-                <h1 className="display-5 fw-bold mb-0">Welcome, {user.username || "User"}!</h1>
+                <h1 className="display-5 fw-bold mb-0">
+                  Welcome, {user.username || "User"}!
+                </h1>
                 <p className="lead mt-2 mb-0 opacity-75">
-                  <span className="badge bg-light text-success me-2">{user.role || "Member"}</span>
+                  <span className="badge bg-light text-success me-2">
+                    {user.role || "Member"}
+                  </span>
                   <span>{user.email || "No email provided"}</span>
                 </p>
               </div>
               <div className="col-md-4 text-center text-md-end mt-3 mt-md-0">
-                <button className="btn btn-outline-light px-4" onClick={handleLogout}>
+                <button
+                  className="btn btn-outline-light px-4"
+                  onClick={handleLogout}
+                >
                   <i className="bi bi-box-arrow-right me-2"></i>
                   Logout
                 </button>
@@ -132,7 +158,21 @@ const UserHomePage = () => {
           </div>
         </div>
       </div>
-
+      <div className="mb-4">
+        <label className="form-label">Filter by Category:</label>
+        <select
+          className="form-select"
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+        >
+          <option value="All">All Categories</option>
+          {categories.map((cat) => (
+            <option key={cat._id} value={cat.name}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      </div>
       {/* Book Collection - Improved card design and layout */}
       <div className="row">
         <div className="col-12">
@@ -140,18 +180,21 @@ const UserHomePage = () => {
             <div className="card-header bg-light py-3">
               <div className="d-flex justify-content-between align-items-center">
                 <h3 className="mb-0 fw-bold">Your Book Collection</h3>
-                <span className="badge bg-success rounded-pill">{books.length} Books</span>
+                <span className="badge bg-success rounded-pill">
+                  {books.length} Books
+                </span>
               </div>
             </div>
             <div className="card-body p-4">
               <p className="text-muted mb-4">
-                Explore the books available in our library. Click on any book to view more details.
+                Explore the books available in our library. Click on any book to
+                view more details.
               </p>
 
               {/* Books Grid - Improved card design with consistent heights */}
-              {books.length > 0 ? (
+              {filteredBooks.length > 0 ? (
                 <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                  {books.map((book) => (
+                  {filteredBooks.map((book) => (
                     <div key={book._id} className="col">
                       <div className="card h-100 border-0 shadow-sm hover-shadow transition">
                         <div
@@ -163,7 +206,11 @@ const UserHomePage = () => {
                               src={book.image}
                               alt={`${book.title} cover`}
                               className="img-fluid rounded-3"
-                              style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "cover" }}
+                              style={{
+                                maxHeight: "100%",
+                                maxWidth: "100%",
+                                objectFit: "cover",
+                              }}
                               loading="lazy"
                               onError={(e) => {
                                 e.target.style.display = "none";
@@ -182,25 +229,43 @@ const UserHomePage = () => {
                               bottom: 0,
                             }}
                           >
-                            <i className="bi bi-book" style={{ fontSize: "5rem" }}></i>
+                            <i
+                              className="bi bi-book"
+                              style={{ fontSize: "5rem" }}
+                            ></i>
                             <h5 className="mt-3">{book.title}</h5>
                           </div>
                         </div>
                         <div className="card-body d-flex flex-column">
-                          <h5 className="card-title text-truncate fw-bold">{book.title}</h5>
-                          <p className="card-text text-muted mb-1">by {book.author?.name || "Unknown Author"}</p>
+                          <h5 className="card-title text-truncate fw-bold">
+                            {book.title}
+                          </h5>
+                          <p className="card-text text-muted mb-1">
+                            by {book.author?.name || "Unknown Author"}
+                          </p>
                           <div className="d-flex justify-content-between align-items-center mt-2 mb-3">
-                            <span className="badge bg-light text-dark">{book.category?.name || "Uncategorized"}</span>
-                            <span className="small">Stock: {book.stock || 0}</span>
+                            <span className="badge bg-light text-dark">
+                              {book.category?.name || "Uncategorized"}
+                            </span>
+                            <span className="small">
+                              Stock: {book.stock || 0}
+                            </span>
                           </div>
                           <div className="mt-auto">
                             <div className="d-flex justify-content-between align-items-center">
                               {book.available ? (
-                                <span className="badge bg-success-subtle text-success px-3 py-2">Available</span>
+                                <span className="badge bg-success-subtle text-success px-3 py-2">
+                                  Available
+                                </span>
                               ) : (
-                                <span className="badge bg-danger-subtle text-danger px-3 py-2">Unavailable</span>
+                                <span className="badge bg-danger-subtle text-danger px-3 py-2">
+                                  Unavailable
+                                </span>
                               )}
-                              <a href={`/book/${book._id}`} className="btn btn-outline-success">
+                              <a
+                                href={`/book/${book._id}`}
+                                className="btn btn-outline-success"
+                              >
                                 View Details
                               </a>
                             </div>
@@ -213,10 +278,17 @@ const UserHomePage = () => {
               ) : (
                 <div className="text-center py-5">
                   <div className="mb-3">
-                    <i className="bi bi-book" style={{ fontSize: "3rem", color: "#6c757d" }}></i>
+                    <i
+                      className="bi bi-book"
+                      style={{ fontSize: "3rem", color: "#6c757d" }}
+                    ></i>
                   </div>
-                  <h4 className="text-muted">No books available at the moment</h4>
-                  <p className="text-muted">Check back later for new additions to our library.</p>
+                  <h4 className="text-muted">
+                    No books available at the moment
+                  </h4>
+                  <p className="text-muted">
+                    Check back later for new additions to our library.
+                  </p>
                 </div>
               )}
             </div>
