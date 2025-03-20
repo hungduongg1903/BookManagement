@@ -32,8 +32,13 @@ router.put(
   loanController.updateLoanStatus
 );
 
-
-
+// Return a book - admin only
+router.put(
+  "/:id/return",
+  authenticate,
+  authorizeAdmin,
+  loanController.returnBook
+);
 // Extend loan duration
 router.put("/:id/extend", authenticate, loanController.extendLoan);
 

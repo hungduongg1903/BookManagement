@@ -141,29 +141,48 @@ exports.updateLoanStatus = async (req, res) => {
 // Return a book
 exports.returnBook = async (req, res) => {
   try {
+    console.log("Return book request received for loan ID:", req.params.id);
+
     const loan = await Loan.findById(req.params.id);
     if (!loan) {
+      console.log("Loan not found with ID:", req.params.id);
       return res.status(404).json({ message: "Loan not found" });
     }
+
+    console.log("Found loan:", loan);
 
     if (loan.status === "returned") {
       return res.status(400).json({ message: "Book already returned" });
     }
 
+    // Update loan status
     loan.status = "returned";
     loan.returnDate = new Date();
     await loan.save();
+    console.log("Loan updated to returned status");
 
     // Update book availability
-    const book = await Book.findById(loan.book);
+    const bookId = loan.book;
+    console.log("Looking for book with ID:", bookId);
+
+    const book = await Book.findById(bookId);
     if (book) {
+      console.log("Found book:", book.title, "Current stock:", book.stock);
       book.stock += 1;
       book.available = true;
       await book.save();
+      console.log("Book stock updated to:", book.stock);
+    } else {
+      console.log("Book not found with ID:", bookId);
     }
 
-    res.status(200).json({ message: "Book returned successfully", loan });
+    res.status(200).json({
+      message: "Book returned successfully",
+      loan,
+      bookUpdated: !!book,
+    });
   } catch (error) {
+    console.error("Error returning book:", error);
     res
       .status(500)
       .json({ message: "Error returning book", error: error.message });

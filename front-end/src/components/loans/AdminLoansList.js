@@ -238,9 +238,7 @@ const AdminLoansList = () => {
     setShowConfirmModal(false);
 
     try {
-      await axios.put(`${API_BASE_URL}/loans/update/${loanToReturn.id}`, {
-        status: "returned",
-      });
+      await axios.put(`${API_BASE_URL}/loans/${loanToReturn.id}/return`);
 
       // Update the loans list
       setLoans(
