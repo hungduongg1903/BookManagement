@@ -209,19 +209,9 @@ const LoanDetails = () => {
                         {formatDate(loan.dueDate)}
                       </div>
                     </div>
-
-                    {loan.returnDate && (
-                      <div className="mb-3">
-                        <div className="text-muted small">Ngày trả:</div>
-                        <div className="d-flex align-items-center text-success">
-                          <FaCheckCircle className="me-2" />
-                          {formatDate(loan.returnDate)}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </Card.Body>
-              </Card>
+              </Card> 
             </Col>
           </Row>
 
