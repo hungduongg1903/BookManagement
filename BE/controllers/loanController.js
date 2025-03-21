@@ -170,7 +170,7 @@ exports.returnBook = async (req, res) => {
       console.log("Found book:", book.title, "Current stock:", book.stock);
       book.stock += 1;
       book.available = true;
-      await book.save();  
+      await book.save();
       console.log("Book stock updated to:", book.stock);
     } else {
       console.log("Book not found with ID:", bookId);

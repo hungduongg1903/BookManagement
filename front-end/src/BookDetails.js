@@ -78,7 +78,7 @@ const BookDetails = () => {
         <div className="alert alert-danger" role="alert">
           {error}
         </div>
-        <button className="btn btn-primary" onClick={() => navigate("/home")}>
+        <button className="btn btn-primary" onClick={() => navigate("/")}>
           Back to Book List
         </button>
       </div>
@@ -91,7 +91,7 @@ const BookDetails = () => {
         <div className="alert alert-warning" role="alert">
           Book not found
         </div>
-        <button className="btn btn-primary" onClick={() => navigate("/home")}>
+        <button className="btn btn-primary" onClick={() => navigate("/")}>
           Back to Book List
         </button>
       </div>
@@ -107,7 +107,7 @@ const BookDetails = () => {
       <div className="mb-4">
         <button
           className="btn btn-outline-primary"
-          onClick={() => navigate("/home")}
+          onClick={() => navigate("/")}
         >
           ← Back to Book List
         </button>

@@ -211,7 +211,7 @@ const LoanDetails = () => {
                     </div>
                   </div>
                 </Card.Body>
-              </Card> 
+              </Card>
             </Col>
           </Row>
 
